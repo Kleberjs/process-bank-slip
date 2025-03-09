@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# localstack_data
+localstack_data
+
 # Logs
 logs
 *.log
