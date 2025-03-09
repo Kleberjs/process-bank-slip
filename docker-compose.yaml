@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   postgres:
     image: postgres:latest
@@ -9,21 +11,81 @@ services:
       - POSTGRES_DB=apiFiles
     ports:
       - 5432:5432
+    networks:
+      - kafka-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
   localstack:
-      image: localstack/localstack
-      container_name: localstack
-      ports:
-        - "4566:4566"
-      environment:
-        - SERVICES=s3
-        - DEFAULT_REGION=us-east-1
-        - DATA_DIR=/tmp/localstack/data
-        - DEBUG=1
-      volumes:
-        - "/var/run/docker.sock:/var/run/docker.sock"
-        - "./localstack_data:/var/lib/localstack"
+    image: localstack/localstack
+    container_name: localstack
+    restart: always
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - DATA_DIR=/tmp/localstack/data
+      - DEBUG=1
+    networks:
+      - kafka-network
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./localstack_data:/var/lib/localstack"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - kafka-network
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - kafka-network
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    restart: always
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9093"
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
 
 volumes:
   postgres_data:
+  kafka_data:
+  zookeeper_data:
