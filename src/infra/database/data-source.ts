@@ -9,8 +9,8 @@ export const dbConfig = {
   database: process.env.DB_NAME,
   port: 5432,
   entities: [`dist/modules/**/database/*.orm-entity{.ts,.js}`],
-  migrations: ['dist/infra/database/migrations/*.ts'],
-  logging: true,
+  migrations: ['dist/infra/database/migrations/*.js'],
+  logging: false,
 } as DataSourceOptions;
 
 export const AppDataSource = new DataSource(dbConfig);

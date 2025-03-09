@@ -19,7 +19,9 @@ async function bootstrap() {
   // end swagger configuration
 
   app.useGlobalFilters(new GlobalExeptionFilter());
-  await app.listen(port);
+  await app.listen(port, () =>
+    console.log(`Listen into http://localhost:${port}`),
+  );
 }
 
 bootstrap().catch((error) =>
