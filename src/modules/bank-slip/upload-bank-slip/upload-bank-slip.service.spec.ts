@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { KafkaProvider } from '../../../infra/providers/kafka/kafka.provider';
-import { S3Provider } from '../../../infra/providers/s3/s3.provider';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { UploadBankSlipService } from './upload-bank-slip.service';
 import { FileUploaded } from '../database/file-uploaded.orm-entity';
+import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
+import { S3Inteface } from '../../../infra/providers/s3/interface/s3.inteface';
 
 describe('UploadBankSlipService', () => {
   let service: UploadBankSlipService;
   let repository: FileUploadedRepository;
-  let s3Provider: S3Provider;
-  let kafkaProvider: KafkaProvider;
+  let s3Provider: S3Inteface;
+  let kafkaProvider: KafkaInterface;
 
   const file = {
     fieldname: 'file',
@@ -28,21 +28,26 @@ describe('UploadBankSlipService', () => {
         {
           provide: FileUploadedRepository,
           useValue: {
+            createAtomicTransaction: jest.fn().mockResolvedValue({
+              commitTransaction: jest.fn(),
+              release: jest.fn(),
+              rollbackTransaction: jest.fn(),
+            }),
             findFileHashed: jest.fn(),
             createFileHashed: jest.fn(),
           },
         },
         {
-          provide: S3Provider,
+          provide: S3Inteface,
           useValue: {
-            uploadFile: jest.fn().mockResolvedValue({
+            uploadFileInMultipart: jest.fn().mockResolvedValue({
               filename: file.originalname,
               bucketName: 'my-bucket',
             }),
           },
         },
         {
-          provide: KafkaProvider,
+          provide: KafkaInterface,
           useValue: {
             sendMessage: jest.fn(),
           },
@@ -52,8 +57,8 @@ describe('UploadBankSlipService', () => {
 
     service = md.get<UploadBankSlipService>(UploadBankSlipService);
     repository = md.get<FileUploadedRepository>(FileUploadedRepository);
-    s3Provider = md.get<S3Provider>(S3Provider);
-    kafkaProvider = md.get<KafkaProvider>(KafkaProvider);
+    s3Provider = md.get<S3Inteface>(S3Inteface);
+    kafkaProvider = md.get<KafkaInterface>(KafkaInterface);
   });
 
   afterEach(jest.clearAllMocks);
@@ -82,7 +87,7 @@ describe('UploadBankSlipService', () => {
   });
 
   it('Should upload file susscessfully', async () => {
-    const spyUploadFile = jest.spyOn(s3Provider, 'uploadFile');
+    const spyUploadFile = jest.spyOn(s3Provider, 'uploadFileInMultipart');
     const spyKafkaProvider = jest.spyOn(kafkaProvider, 'sendMessage');
 
     await service.execute(file);
