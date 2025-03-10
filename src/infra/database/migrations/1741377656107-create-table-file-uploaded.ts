@@ -9,9 +9,7 @@ export class CreateTableFileUploaded1741377656107
             "id" SERIAL PRIMARY KEY,
             "file_name" VARCHAR(255) NOT NULL,
             "file_hashed" VARCHAR(255) NOT NULL,
-            "sended_by" VARCHAR(255) NOT NULL,
-            "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
     `);
   }

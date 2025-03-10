@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('FileUploaded')
 export class FileUploaded {
@@ -11,12 +16,6 @@ export class FileUploaded {
   @Column({ name: 'file_hashed' })
   fileHashed: string;
 
-  @Column({ name: 'sended_by' })
-  sendedBy: string;
-
-  @Column({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
-  @Column({ name: 'updated_at' })
-  updatedAt: Date;
 }

@@ -1,11 +1,25 @@
+import { InjectRepository } from '@nestjs/typeorm';
 import { FileUploaded } from './file-uploaded.orm-entity';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { AppDataSource } from '../../../infra/database/data-source';
 
 @Injectable()
-export class FileUploadedRepository extends Repository<FileUploaded> {
-  constructor() {
-    super(FileUploaded, AppDataSource.createEntityManager());
+export class FileUploadedRepository {
+  constructor(
+    @InjectRepository(FileUploaded)
+    private readonly repository: Repository<FileUploaded>,
+  ) {}
+
+  async findFileHashed(fileHashed: string) {
+    return this.repository.findOne({ where: { fileHashed } });
+  }
+
+  async createFileHashed(file: Express.Multer.File, fileHashed: string) {
+    const dto = this.repository.create({
+      filename: file.originalname,
+      fileHashed,
+    });
+
+    await this.repository.save(dto);
   }
 }

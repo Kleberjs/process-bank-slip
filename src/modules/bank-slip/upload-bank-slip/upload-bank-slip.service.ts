@@ -120,9 +120,8 @@ export class UploadBankSlipService {
   private async checkCsvFileAlreadyExistsInDatabase(
     fileHashed: string,
   ): Promise<void> {
-    const fileSaved = await this.fileUploadRepository.findOne({
-      where: { fileHashed },
-    });
+    const fileSaved =
+      await this.fileUploadRepository.findFileHashed(fileHashed);
 
     if (fileSaved) {
       throw new ErrorCsvFile({
@@ -140,12 +139,6 @@ export class UploadBankSlipService {
     this.logger.log(
       `Salvando arquivo no banco de dados - ${file.originalname}`,
     );
-    const dto = this.fileUploadRepository.create({
-      filename: file.fieldname,
-      fileHashed,
-      sendedBy: 'fulano',
-    });
-
-    await this.fileUploadRepository.save(dto);
+    await this.fileUploadRepository.createFileHashed(file, fileHashed);
   }
 }
