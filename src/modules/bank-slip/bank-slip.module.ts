@@ -6,6 +6,8 @@ import { S3Provider } from '../../infra/providers/s3/s3.provider';
 import { KafkaProvider } from '../../infra/providers/kafka/kafka.provider';
 import { FileUploaded } from './database/file-uploaded.orm-entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { KafkaInterface } from '../../infra/providers/kafka/interface/kafka.interface';
+import { S3Inteface } from '../../infra/providers/s3/interface/s3.inteface';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FileUploaded])],
@@ -13,8 +15,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   providers: [
     UploadBankSlipService,
     FileUploadedRepository,
-    S3Provider,
-    KafkaProvider,
+    { provide: S3Inteface, useClass: S3Provider },
+    { provide: KafkaInterface, useClass: KafkaProvider },
   ],
 })
 export class BankSlipModule {}

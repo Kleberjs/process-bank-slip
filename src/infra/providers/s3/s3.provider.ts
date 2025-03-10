@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
+import { S3Inteface, S3UploadResponseDto } from './interface/s3.inteface';
 
 @Injectable()
-export class S3Provider {
+export class S3Provider implements S3Inteface {
   private readonly logger: Logger = new Logger(S3Provider.name);
 
   private s3Client: S3;
@@ -26,14 +27,15 @@ export class S3Provider {
     });
   }
 
-  async uploadFile(
+  async uploadFileInMultipart(
     fileBuffer: Buffer,
     filename: string,
-  ): Promise<{ filename: string; bucketName: string }> {
+  ): Promise<S3UploadResponseDto> {
     console.time('TIME-UPLOADING');
     const bucketName = this.configService.get<string>('S3_BUCKET') as string;
 
-    const PART_SIZE = 5 * 1024 * 1024;
+    const PART_SIZE = this.transformMegaByteToBytes(5);
+    console.log('PART_SIZE', PART_SIZE);
 
     const createParams: AWS.S3.CreateMultipartUploadRequest = {
       Bucket: bucketName,
@@ -92,5 +94,11 @@ export class S3Provider {
         .promise();
       throw error;
     }
+  }
+
+  private transformMegaByteToBytes(valueInMegabytes = 5) {
+    const bytes = 1024;
+
+    return valueInMegabytes * bytes * bytes;
   }
 }
