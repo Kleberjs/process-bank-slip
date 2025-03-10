@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Readable } from 'stream';
-import * as csvParser from 'csv-parser';
-import { ErrorMessageCsvFile as ErrorCsvFile } from '../../../infra/handlers/error-message-csv-file.error';
+import { ErrorMessageCsvFile } from '../../../infra/handlers/error-message-csv-file.error';
 import { createHash } from 'crypto';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
-import { S3Provider } from '../../../infra/providers/s3/s3.provider';
-import { KafkaProvider } from '../../../infra/providers/kafka/kafka.provider';
+import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
+import { S3Inteface } from '../../../infra/providers/s3/interface/s3.inteface';
+import * as csvParser from 'csv-parser';
 
 @Injectable()
 export class UploadBankSlipService {
@@ -21,31 +21,36 @@ export class UploadBankSlipService {
 
   constructor(
     private readonly fileUploadRepository: FileUploadedRepository,
-    private readonly s3Service: S3Provider,
-    private readonly kafkaProvider: KafkaProvider,
+    private readonly s3Service: S3Inteface,
+    private readonly kafkaProvider: KafkaInterface,
   ) {}
 
   public async execute(file: Express.Multer.File) {
+    const queryRunner =
+      await this.fileUploadRepository.createAtomicTransaction();
+
     try {
       this.logger.log(
         `Iniciando processamento do arquivo - ${file.originalname}`,
       );
+
       await this.validateHeaderFromCsvFile(file);
 
       const fileHashed = this.genrateHash(file.buffer);
 
       await this.checkCsvFileAlreadyExistsInDatabase(fileHashed);
 
-      await this.saveCsvFileInDatabase(file, fileHashed);
+      await this.saveCsvFileInDatabase(queryRunner, file, fileHashed);
 
       this.logger.log(
         `Iniciando upload no bucket para o arquivo: ${file.originalname}`,
       );
 
-      const { filename, bucketName } = await this.s3Service.uploadFile(
-        file.buffer,
-        file.originalname,
-      );
+      const { filename, bucketName } =
+        await this.s3Service.uploadFileInMultipart(
+          file.buffer,
+          file.originalname,
+        );
 
       this.logger.log('Emitindo evento na fila para processamento');
 
@@ -54,12 +59,17 @@ export class UploadBankSlipService {
         bucketName,
       });
 
+      await queryRunner.commitTransaction();
+
       this.logger.log(
         `Finalizado processamento do arquivo - ${file.originalname}`,
       );
     } catch (error) {
       this.logger.error(`Erro: ${JSON.stringify(error)}`);
+      await queryRunner.rollbackTransaction();
       throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -70,7 +80,7 @@ export class UploadBankSlipService {
     const errorsMessage = this.mountErrorsFromHeader(header);
 
     if (errorsMessage.length) {
-      throw new ErrorCsvFile({
+      throw new ErrorMessageCsvFile({
         message: 'Erro no arquivo csv',
         details: errorsMessage.join(' - '),
         statusCode: 400,
@@ -124,7 +134,7 @@ export class UploadBankSlipService {
       await this.fileUploadRepository.findFileHashed(fileHashed);
 
     if (fileSaved) {
-      throw new ErrorCsvFile({
+      throw new ErrorMessageCsvFile({
         message: 'Erro no arquivo csv',
         details: 'Arquivo CSV já processado',
         statusCode: 422,
@@ -133,12 +143,17 @@ export class UploadBankSlipService {
   }
 
   private async saveCsvFileInDatabase(
+    queryRunner: any,
     file: Express.Multer.File,
     fileHashed: string,
   ): Promise<void> {
     this.logger.log(
       `Salvando arquivo no banco de dados - ${file.originalname}`,
     );
-    await this.fileUploadRepository.createFileHashed(file, fileHashed);
+    await this.fileUploadRepository.createFileHashed(
+      queryRunner,
+      file,
+      fileHashed,
+    );
   }
 }

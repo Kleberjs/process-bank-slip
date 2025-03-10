@@ -10,16 +10,28 @@ export class FileUploadedRepository {
     private readonly repository: Repository<FileUploaded>,
   ) {}
 
+  async createAtomicTransaction() {
+    const queryRunner = this.repository.manager.connection.createQueryRunner();
+
+    await queryRunner.startTransaction();
+
+    return queryRunner;
+  }
+
   async findFileHashed(fileHashed: string) {
     return this.repository.findOne({ where: { fileHashed } });
   }
 
-  async createFileHashed(file: Express.Multer.File, fileHashed: string) {
+  async createFileHashed(
+    queryRunner: any,
+    file: Express.Multer.File,
+    fileHashed: string,
+  ) {
     const dto = this.repository.create({
       filename: file.originalname,
       fileHashed,
     });
 
-    await this.repository.save(dto);
+    await queryRunner.manager.save(dto);
   }
 }
