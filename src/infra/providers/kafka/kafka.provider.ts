@@ -5,9 +5,12 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Kafka, Producer } from 'kafkajs';
+import { KafkaInterface } from './interface/kafka.interface';
 
 @Injectable()
-export class KafkaProvider implements OnModuleInit, OnModuleDestroy {
+export class KafkaProvider
+  implements OnModuleInit, OnModuleDestroy, KafkaInterface
+{
   private readonly logger: Logger = new Logger(KafkaProvider.name);
   private readonly kafka = new Kafka({
     clientId: 'ms-api-file',
