@@ -23,7 +23,7 @@ export class UploadBankSlipsController {
     description: 'Arquivos do tipo CSV',
     type: FileUploadDto,
   })
-  uploadBankSlip(
+  async uploadBankSlip(
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
@@ -34,7 +34,9 @@ export class UploadBankSlipsController {
         }),
     )
     file: Express.Multer.File,
-  ) {
-    return this.service.execute(file);
+  ): Promise<{ success: boolean; statusCode: number }> {
+    await this.service.execute(file);
+
+    return { success: true, statusCode: 201 };
   }
 }
