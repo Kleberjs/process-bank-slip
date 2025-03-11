@@ -15,7 +15,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         database: configService.get<string>('DB_NAME'),
         port: configService.get<number>('DB_PORT'),
         entities: [`${__dirname}/../../modules/**/*.orm-entity.{ts,js}`],
-        synchronize: false,
         autoLoadEntities: true,
         logging: false,
       }),
