@@ -3,7 +3,7 @@ export class S3UploadResponseDto {
   bucketName: string;
 }
 
-export abstract class S3Inteface {
+export abstract class S3Interface {
   abstract uploadFileInMultipart(
     fileBuffer: Buffer,
     filename: string,

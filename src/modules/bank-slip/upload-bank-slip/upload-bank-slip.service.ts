@@ -4,7 +4,7 @@ import { ErrorMessageCsvFile } from '../../../infra/handlers/error-message-csv-f
 import { createHash } from 'crypto';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
-import { S3Inteface } from '../../../infra/providers/s3/interface/s3.inteface';
+import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import * as csvParser from 'csv-parser';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class UploadBankSlipService {
 
   constructor(
     private readonly fileUploadRepository: FileUploadedRepository,
-    private readonly s3Service: S3Inteface,
+    private readonly s3Service: S3Interface,
     private readonly kafkaProvider: KafkaInterface,
   ) {}
 

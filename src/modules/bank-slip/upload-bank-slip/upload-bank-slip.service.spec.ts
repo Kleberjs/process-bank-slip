@@ -3,12 +3,12 @@ import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { UploadBankSlipService } from './upload-bank-slip.service';
 import { FileUploaded } from '../database/file-uploaded.orm-entity';
 import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
-import { S3Inteface } from '../../../infra/providers/s3/interface/s3.inteface';
+import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 
 describe('UploadBankSlipService', () => {
   let service: UploadBankSlipService;
   let repository: FileUploadedRepository;
-  let s3Provider: S3Inteface;
+  let s3Provider: S3Interface;
   let kafkaProvider: KafkaInterface;
 
   const file = {
@@ -38,7 +38,7 @@ describe('UploadBankSlipService', () => {
           },
         },
         {
-          provide: S3Inteface,
+          provide: S3Interface,
           useValue: {
             uploadFileInMultipart: jest.fn().mockResolvedValue({
               filename: file.originalname,
@@ -57,7 +57,7 @@ describe('UploadBankSlipService', () => {
 
     service = md.get<UploadBankSlipService>(UploadBankSlipService);
     repository = md.get<FileUploadedRepository>(FileUploadedRepository);
-    s3Provider = md.get<S3Inteface>(S3Inteface);
+    s3Provider = md.get<S3Interface>(S3Interface);
     kafkaProvider = md.get<KafkaInterface>(KafkaInterface);
   });
 

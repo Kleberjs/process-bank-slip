@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
-import { S3Inteface, S3UploadResponseDto } from './interface/s3.inteface';
+import { S3Interface, S3UploadResponseDto } from './interface/s3.interface';
 
 @Injectable()
-export class S3Provider implements S3Inteface {
+export class S3Provider implements S3Interface {
   private readonly logger: Logger = new Logger(S3Provider.name);
 
   private s3Client: S3;
