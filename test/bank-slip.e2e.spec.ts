@@ -11,9 +11,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 describe('Upload Multipart (e2e)', () => {
-  let appTest: INestApplication;
+  let app: INestApplication;
   let dataSource: DataSource;
   let dataSourceModule: DataSourceTestModule;
+  let s3Provider: S3Interface;
 
   beforeAll(async () => {
     const mockKafkaProvider = {
@@ -42,25 +43,28 @@ describe('Upload Multipart (e2e)', () => {
       .useValue(mockS3Provider)
       .compile();
 
-    appTest = md.createNestApplication();
-    dataSourceModule = appTest.get(DataSourceTestModule);
-    dataSource = appTest.get(DataSource);
-    await appTest.init();
+    app = md.createNestApplication();
+    dataSourceModule = app.get(DataSourceTestModule);
+    dataSource = app.get<DataSource>(DataSource);
+    s3Provider = app.get<S3Interface>(S3Interface);
+
+    await app.init();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await dataSourceModule.clearDatabase();
-    await appTest.close();
   });
 
-  it('deve realizar upload de arquivo multipart para o S3', async () => {
+  afterAll(async () => await app.close());
+
+  it('Should save file in database when file is upload to S3 bucket successfully', async () => {
     const filePath = path.resolve(__dirname, './files/sample.csv');
 
     if (!fs.existsSync(filePath)) {
       throw new Error(`Arquivo de teste não encontrado: ${filePath}`);
     }
 
-    await request(appTest.getHttpServer())
+    await request(app.getHttpServer())
       .post('/bank-slip/upload')
       .attach('file', filePath)
       .expect(201);
@@ -72,5 +76,31 @@ describe('Upload Multipart (e2e)', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].file_name).toBe('sample.csv');
+  });
+
+  it('Should rollback file saved in database when upload to s3 bucket fails', async () => {
+    jest
+      .spyOn(s3Provider, 'uploadFileInMultipart')
+      .mockRejectedValueOnce(new Error('Upload fails'));
+
+    const filePath = path.resolve(__dirname, './files/sample.csv');
+
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Arquivo de teste não encontrado: ${filePath}`);
+    }
+
+    await request(app.getHttpServer())
+      .post('/bank-slip/upload')
+      .attach('file', filePath)
+      .catch((reason) => {
+        expect(reason.message).toEqual('Upload fails');
+      });
+
+    const result = await dataSource.query(
+      'SELECT * FROM "FileUploaded" WHERE file_name = $1',
+      ['sample.csv'],
+    );
+
+    expect(result).toHaveLength(0);
   });
 });
