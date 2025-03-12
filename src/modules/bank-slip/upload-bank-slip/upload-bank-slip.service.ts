@@ -21,7 +21,7 @@ export class UploadBankSlipService {
 
   constructor(
     private readonly fileUploadRepository: FileUploadedRepository,
-    private readonly s3Service: S3Interface,
+    private readonly s3Provider: S3Interface,
     private readonly kafkaProvider: KafkaInterface,
   ) {}
 
@@ -47,7 +47,7 @@ export class UploadBankSlipService {
       );
 
       const { filename, bucketName } =
-        await this.s3Service.uploadFileInMultipart(
+        await this.s3Provider.uploadFileInMultipart(
           file.buffer,
           file.originalname,
         );
