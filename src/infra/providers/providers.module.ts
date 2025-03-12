@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { KafkaInterface } from './kafka/interface/kafka.interface';
-import { KafkaProvider } from './kafka/kafka.provider';
 import { S3Interface } from './s3/interface/s3.interface';
 import { S3Provider } from './s3/s3.provider';
+import { KafkaProducerInterface } from './kafka/interfaces/kafka-producer.interface';
+import { KafkaProducerProvider } from './kafka/kafka-producer.provider';
 
 @Module({
   providers: [
-    { provide: KafkaInterface, useClass: KafkaProvider },
+    { provide: KafkaProducerInterface, useClass: KafkaProducerProvider },
     { provide: S3Interface, useClass: S3Provider },
   ],
   exports: [
-    { provide: KafkaInterface, useClass: KafkaProvider },
+    { provide: KafkaProducerInterface, useClass: KafkaProducerProvider },
     { provide: S3Interface, useClass: S3Provider },
   ],
 })

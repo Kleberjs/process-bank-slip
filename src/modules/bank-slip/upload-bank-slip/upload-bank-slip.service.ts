@@ -3,9 +3,9 @@ import { Readable } from 'stream';
 import { ErrorMessageCsvFile } from '../../../infra/handlers/error-message-csv-file.error';
 import { createHash } from 'crypto';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
-import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import * as csvParser from 'csv-parser';
+import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
 
 @Injectable()
 export class UploadBankSlipService {
@@ -22,7 +22,7 @@ export class UploadBankSlipService {
   constructor(
     private readonly fileUploadRepository: FileUploadedRepository,
     private readonly s3Provider: S3Interface,
-    private readonly kafkaProvider: KafkaInterface,
+    private readonly kafkaProvider: KafkaProducerInterface,
   ) {}
 
   public async execute(file: Express.Multer.File) {
@@ -54,7 +54,7 @@ export class UploadBankSlipService {
 
       this.logger.log('Emitindo evento na fila para processamento');
 
-      await this.kafkaProvider.sendMessage('bank-slip-uploaded', {
+      await this.kafkaProvider.sendMessage({
         filename,
         bucketName,
       });

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UploadBankSlipsController } from './upload-bank-slip.controller';
 import { UploadBankSlipService } from './upload-bank-slip.service';
-import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
-import { S3Inteface } from '../../../infra/providers/s3/interface/s3.inteface';
+import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
+import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
 
 describe('UploadBankSlipController', () => {
   let controller: UploadBankSlipsController;
@@ -37,7 +37,7 @@ describe('UploadBankSlipController', () => {
           },
         },
         {
-          provide: S3Inteface,
+          provide: S3Interface,
           useValue: {
             uploadFileInMultipart: jest.fn().mockResolvedValue({
               filename: file.originalname,
@@ -46,7 +46,7 @@ describe('UploadBankSlipController', () => {
           },
         },
         {
-          provide: KafkaInterface,
+          provide: KafkaProducerInterface,
           useValue: {
             sendMessage: jest.fn(),
           },
