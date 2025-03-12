@@ -2,13 +2,13 @@ import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { KafkaInterface } from '../src/infra/providers/kafka/interface/kafka.interface';
 import { S3Interface } from '../src/infra/providers/s3/interface/s3.interface';
 import { BankSlipModule } from '../src/modules/bank-slip/bank-slip.module';
 import { DataSourceTestModule } from './data-source-test.module';
 import * as request from 'supertest';
 import * as path from 'path';
 import * as fs from 'fs';
+import { KafkaConsumerInterface } from '../src/infra/providers/kafka/interfaces/kafka-consumer.interface';
 
 describe('Upload Multipart (e2e)', () => {
   let app: INestApplication;
@@ -37,7 +37,7 @@ describe('Upload Multipart (e2e)', () => {
         BankSlipModule,
       ],
     })
-      .overrideProvider(KafkaInterface)
+      .overrideProvider(KafkaConsumerInterface)
       .useValue(mockKafkaProvider)
       .overrideProvider(S3Interface)
       .useValue(mockS3Provider)

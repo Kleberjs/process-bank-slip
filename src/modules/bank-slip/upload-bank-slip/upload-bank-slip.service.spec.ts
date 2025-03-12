@@ -2,14 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { UploadBankSlipService } from './upload-bank-slip.service';
 import { FileUploaded } from '../database/file-uploaded.orm-entity';
-import { KafkaInterface } from '../../../infra/providers/kafka/interface/kafka.interface';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
+import { KafkaConsumerInterface } from '../../../infra/providers/kafka/interfaces/kafka-consumer.interface';
 
 describe('UploadBankSlipService', () => {
   let service: UploadBankSlipService;
   let repository: FileUploadedRepository;
   let s3Provider: S3Interface;
-  let kafkaProvider: KafkaInterface;
+  let kafkaProvider: KafkaConsumerInterface;
 
   const file = {
     fieldname: 'file',
@@ -47,7 +47,7 @@ describe('UploadBankSlipService', () => {
           },
         },
         {
-          provide: KafkaInterface,
+          provide: KafkaConsumerInterface,
           useValue: {
             sendMessage: jest.fn(),
           },
@@ -58,7 +58,7 @@ describe('UploadBankSlipService', () => {
     service = md.get<UploadBankSlipService>(UploadBankSlipService);
     repository = md.get<FileUploadedRepository>(FileUploadedRepository);
     s3Provider = md.get<S3Interface>(S3Interface);
-    kafkaProvider = md.get<KafkaInterface>(KafkaInterface);
+    kafkaProvider = md.get<KafkaConsumerInterface>(KafkaConsumerInterface);
   });
 
   afterEach(jest.clearAllMocks);
@@ -93,7 +93,7 @@ describe('UploadBankSlipService', () => {
     await service.execute(file);
 
     expect(spyUploadFile).toHaveBeenCalledWith(file.buffer, file.originalname);
-    expect(spyKafkaProvider).toHaveBeenCalledWith('bank-slip-uploaded', {
+    expect(spyKafkaProvider).toHaveBeenCalledWith({
       filename: file.originalname,
       bucketName: 'my-bucket',
     });
