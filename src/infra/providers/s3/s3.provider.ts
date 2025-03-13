@@ -27,15 +27,19 @@ export class S3Provider implements S3Interface {
     });
   }
 
-  async uploadFileInMultipart(
+  public async uploadFileInMultipart(
     fileBuffer: Buffer,
     filename: string,
   ): Promise<S3UploadResponseDto> {
+    this.logger.log(
+      `Subindo arquivo ${filename} para bucket S3 em Multipart Upload`,
+    );
+
     console.time('TIME-UPLOADING');
+
     const bucketName = this.configService.get<string>('S3_BUCKET') as string;
 
     const PART_SIZE = this.transformMegaByteToBytes(5);
-    console.log('PART_SIZE', PART_SIZE);
 
     const createParams: AWS.S3.CreateMultipartUploadRequest = {
       Bucket: bucketName,
@@ -70,6 +74,7 @@ export class S3Provider implements S3Interface {
           .uploadPart(uploadPartParams)
           .promise();
 
+        // incluir log
         parts.push({ ETag, PartNumber: partNumber });
       }
 
@@ -83,15 +88,50 @@ export class S3Provider implements S3Interface {
       await this.s3Client.completeMultipartUpload(completeParams).promise();
       console.timeEnd('TIME-UPLOADING');
 
+      this.logger.log(`Arquivo ${filename} salvo no bucket S3`);
+
       return {
         bucketName,
         filename,
       };
     } catch (error) {
-      this.logger.error('Erro no upload multipart:', JSON.stringify(error));
+      this.logger.error(`Erro no upload multipart: ${JSON.stringify(error)}`);
+
       await this.s3Client
         .abortMultipartUpload({ Bucket: bucketName, Key: filename, UploadId })
         .promise();
+
+      throw error;
+    }
+  }
+
+  public async getFileFromS3(filename: string): Promise<any> {
+    const bucketName = this.configService.get<string>('S3_BUCKET') as string;
+
+    const params = {
+      Bucket: bucketName,
+      Key: filename,
+    };
+
+    this.logger.log(`Buscando arquivo ${filename} no bucket S3`);
+
+    try {
+      const s3Object = await this.s3Client.getObject(params).promise();
+
+      if (!s3Object?.Body) {
+        this.logger.error(`Arquivo ${filename} não encontrado`);
+
+        return null;
+      }
+
+      this.logger.log(`Arquivo ${filename} encontrado no bucket S3`);
+
+      return s3Object;
+    } catch (error) {
+      this.logger.error(
+        `Erro ao tentar buscar arquivo no bucket S3: ${JSON.stringify(error)}`,
+      );
+
       throw error;
     }
   }

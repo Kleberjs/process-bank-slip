@@ -8,4 +8,6 @@ export abstract class S3Interface {
     fileBuffer: Buffer,
     filename: string,
   ): Promise<S3UploadResponseDto>;
+
+  abstract getFileFromS3(filename: string): Promise<any>;
 }

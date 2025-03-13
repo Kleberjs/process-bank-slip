@@ -4,13 +4,7 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import {
-  Consumer,
-  EachMessagePayload,
-  Kafka,
-  logLevel,
-  Producer,
-} from 'kafkajs';
+import { Consumer, Kafka, logLevel, Producer } from 'kafkajs';
 import { KafkaProducerInterface } from './interfaces/kafka-producer.interface';
 
 @Injectable()
@@ -18,13 +12,12 @@ export class KafkaProducerProvider
   implements OnModuleInit, OnModuleDestroy, KafkaProducerInterface
 {
   private readonly logger: Logger = new Logger(KafkaProducerProvider.name);
-  private readonly TOPIC_FILE = process.env.TOPIC_FILE as string;
+
   private kafka: Kafka;
   private producer: Producer;
   private consumer: Consumer;
 
   async onModuleInit() {
-    const topic = this.TOPIC_FILE;
     this.kafka = new Kafka({
       clientId: 'ms-api-file',
       brokers: ['localhost:9092'],
@@ -36,20 +29,8 @@ export class KafkaProducerProvider
     });
 
     this.producer = this.kafka.producer();
-    this.consumer = this.kafka.consumer({ groupId: 'process-file' });
 
     await this.producer.connect();
-
-    await this.consumer.subscribe({ topic, fromBeginning: true });
-
-    await this.consumer.run({
-      eachMessage: async ({ message }: EachMessagePayload) => {
-        return new Promise((resolve) => {
-          this.logger.log(`Recebizda mensagem: ${message.value?.toString()}`);
-          resolve();
-        });
-      },
-    });
 
     this.logger.log('Kafka Producer connected');
   }
@@ -61,14 +42,17 @@ export class KafkaProducerProvider
     }
   }
 
-  async sendMessage(message: any) {
+  async sendMessage(topic: string, message: any) {
     try {
-      const topic = this.TOPIC_FILE;
-
-      await this.producer.send({
+      this.logger.log(
+        `Sending message - topic: ${topic} - message: ${JSON.stringify(message)}`,
+      );
+      const record = await this.producer.send({
         topic,
         messages: [{ value: JSON.stringify(message) }],
       });
+
+      this.logger.log(`Record: ${JSON.stringify(record)}`);
     } catch (error) {
       this.logger.error(
         `Error trying sending message to kafka: ${error?.message}`,

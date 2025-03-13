@@ -6,6 +6,7 @@ import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import * as csvParser from 'csv-parser';
 import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UploadBankSlipService {
@@ -18,12 +19,18 @@ export class UploadBankSlipService {
     'debtDueDate',
     'debtId',
   ];
+  private readonly TOPIC: string;
 
   constructor(
     private readonly fileUploadRepository: FileUploadedRepository,
     private readonly s3Provider: S3Interface,
     private readonly kafkaProvider: KafkaProducerInterface,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.TOPIC = this.configService.get<string>(
+      'KAFKA_TOPIC_FILE_UPLOAD',
+    ) as string;
+  }
 
   public async execute(file: Express.Multer.File) {
     const queryRunner =
@@ -40,7 +47,7 @@ export class UploadBankSlipService {
 
       await this.checkCsvFileAlreadyExistsInDatabase(fileHashed);
 
-      await this.saveCsvFileInDatabase(queryRunner, file, fileHashed);
+      // await this.saveCsvFileInDatabase(queryRunner, file, fileHashed);
 
       this.logger.log(
         `Iniciando upload no bucket para o arquivo: ${file.originalname}`,
@@ -54,7 +61,7 @@ export class UploadBankSlipService {
 
       this.logger.log('Emitindo evento na fila para processamento');
 
-      await this.kafkaProvider.sendMessage({
+      await this.kafkaProvider.sendMessage(this.TOPIC, {
         filename,
         bucketName,
       });

@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
-import { S3Provider } from '../../../infra/providers/s3/s3.provider';
-import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
-import { KafkaProducerProvider } from '../../../infra/providers/kafka/kafka-producer.provider';
+import { GetFileS3Service } from './get-file-s3.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BankSlip } from './database/bank-slip.orm-entity';
+import { BankSlipRepository } from './database/bank-slip.repository';
+import { ProviderModule } from '../../../infra/providers/providers.module';
 
 @Module({
-  providers: [
-    { provide: KafkaProducerInterface, useClass: KafkaProducerProvider },
-    { provide: S3Interface, useClass: S3Provider },
-  ],
+  imports: [ProviderModule, TypeOrmModule.forFeature([BankSlip])],
+  providers: [GetFileS3Service, BankSlipRepository],
 })
 export class GetFileS3Module {}
