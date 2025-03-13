@@ -61,13 +61,13 @@ export class GetFileS3Service {
       const stream =
         Body instanceof Readable ? Body : Readable.from(Body as Buffer);
 
-      const rl = readline.createInterface({ input: stream });
+      const readableLine = readline.createInterface({ input: stream });
 
       let posEmail: number = 0;
       let posDebtyId: number = 0;
       let isFirstLine = true;
 
-      for await (const line of rl) {
+      for await (const line of readableLine) {
         if (isFirstLine) {
           posDebtyId = line.split(',').findIndex((l) => l === 'debtId');
 
@@ -89,21 +89,24 @@ export class GetFileS3Service {
           await this.bankSlipAlreadyProcessed(debtyId);
 
         if (fileAlreadyProcessed) {
-          this.logger.log(`Boleto já gerado e email já enviado`);
+          this.logger.warn(
+            `Boleto já foi gerado e email já foi enviado - debtyId: ${debtyId}`,
+          );
 
           return;
         }
+
         const payload = {
           debtyId,
           email,
         };
 
-        await this.saveDebty(payload);
+        await this.saveBankSlip(payload);
 
         await this.kafkaProducer.sendMessage(this.TOPIC_PRODUCER, payload);
 
         this.logger.log(
-          `Enviado para geração de boleto e envio de email: ${debtyId}`,
+          `Enviado para processamento de boleto e envio de email: ${debtyId}`,
         );
       }
     } catch (error) {
@@ -134,7 +137,7 @@ export class GetFileS3Service {
     return !!isAlreadProcced;
   }
 
-  private async saveDebty(payload: {
+  private async saveBankSlip(payload: {
     debtyId: string;
     email: string;
   }): Promise<void> {
