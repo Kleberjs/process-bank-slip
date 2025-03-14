@@ -4,7 +4,7 @@ import { EachMessagePayload } from 'kafkajs';
 import { BankSlipRepository } from '../consumer-file/get-file-s3/database/bank-slip.repository';
 import { BankSlip } from '../consumer-file/get-file-s3/database/bank-slip.orm-entity';
 import { MailInterface } from '../../infra/providers/mail/interface/mail.interface';
-import { PDFInterface } from '../../infra/providers/generate-pdf/interface/pdf.interface';
+import { PDFInterface } from '../../infra/providers/pdf/interface/pdf.interface';
 import { KafkaConsumerGenerateBankSlipProvider } from '../../infra/providers/kafka/kafka-consumer-generate-bank-slip.provider';
 
 @Injectable()
