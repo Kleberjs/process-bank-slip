@@ -5,13 +5,14 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Consumer, ConsumerRunConfig, Kafka, logLevel } from 'kafkajs';
-import { KafkaConsumerInterface } from './interfaces/kafka-consumer.interface';
 
 @Injectable()
-export class KafkaConsumerProvider
-  implements OnModuleInit, OnModuleDestroy, KafkaConsumerInterface
+export class KafkaConsumerGetFileS3Provider
+  implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger: Logger = new Logger(KafkaConsumerProvider.name);
+  private readonly logger: Logger = new Logger(
+    KafkaConsumerGetFileS3Provider.name,
+  );
   private kafka: Kafka;
   private consumer: Consumer;
 

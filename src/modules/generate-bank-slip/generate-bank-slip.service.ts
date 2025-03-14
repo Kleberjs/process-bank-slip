@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { KafkaConsumerInterface } from '../../infra/providers/kafka/interfaces/kafka-consumer.interface';
 import { ConfigService } from '@nestjs/config';
 import { EachMessagePayload } from 'kafkajs';
 import { BankSlipRepository } from '../consumer-file/get-file-s3/database/bank-slip.repository';
 import { BankSlip } from '../consumer-file/get-file-s3/database/bank-slip.orm-entity';
 import { MailInterface } from '../../infra/providers/mail/interface/mail.interface';
 import { PDFInterface } from '../../infra/providers/generate-pdf/interface/pdf.interface';
+import { KafkaConsumerGenerateBankSlipProvider } from '../../infra/providers/kafka/kafka-consumer-generate-bank-slip.provider';
 
 @Injectable()
 export class GenerateBankSlipService {
@@ -16,7 +16,7 @@ export class GenerateBankSlipService {
   constructor(
     private readonly configService: ConfigService,
     private readonly bankSlipRepository: BankSlipRepository,
-    private readonly kafkaConsumer: KafkaConsumerInterface,
+    private readonly kafkaConsumer: KafkaConsumerGenerateBankSlipProvider,
     private readonly pdfProvider: PDFInterface,
     private readonly mailProvider: MailInterface,
   ) {
@@ -51,11 +51,15 @@ export class GenerateBankSlipService {
     if (!bankSlip.bankSlipGenerated) {
       await this.generateFromBankSlipPdf(bankSlip);
 
+      this.logger.log(`PDF - debtId: ${debtId}`);
+
       bankSlipToUpdate.bankSlipGenerated = true;
     }
 
     if (!bankSlip.emailSended) {
       await this.sendEmailToUser(bankSlip);
+
+      this.logger.log(`Email send - debtId: ${debtId}`);
 
       bankSlipToUpdate.emailSended = true;
     }

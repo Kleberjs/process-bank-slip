@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { KafkaConsumerInterface } from '../../../infra/providers/kafka/interfaces/kafka-consumer.interface';
 import { EachMessagePayload } from 'kafkajs';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { Readable } from 'stream';
@@ -10,6 +9,7 @@ import {
   KafkaSendFileToS3Dto,
 } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
 import { BankSlipRepository } from './database/bank-slip.repository';
+import { KafkaConsumerGetFileS3Provider } from '../../../infra/providers/kafka/kafka-consumer-get-file-s3.provider';
 
 @Injectable()
 export class GetFileS3Service {
@@ -22,7 +22,7 @@ export class GetFileS3Service {
     private readonly configService: ConfigService,
     private readonly s3Provider: S3Interface,
     private readonly kafkaProducer: KafkaProducerInterface,
-    private readonly kafkaConsumer: KafkaConsumerInterface,
+    private readonly kafkaConsumer: KafkaConsumerGetFileS3Provider,
     private readonly bankSlipRepository: BankSlipRepository,
   ) {
     this.TOPIC_CONSUMER = this.configService.get<string>(
@@ -93,30 +93,28 @@ export class GetFileS3Service {
         const fileAlreadyProcessed =
           await this.bankSlipAlreadyProcessed(debtId);
 
-        if (fileAlreadyProcessed) {
+        if (!fileAlreadyProcessed) {
+          const payload = {
+            debtId,
+            name: line.split(',')[posName],
+            governmentId: line.split(',')[posGovId],
+            email: line.split(',')[posEmail],
+            debtAmount: line.split(',')[posDebtAmount],
+            debtDueDate: line.split(',')[posDebtDueDate],
+          };
+
+          await this.saveBankSlipAndEmail(payload);
+
+          await this.kafkaProducer.sendMessage(this.TOPIC_PRODUCER, payload);
+
+          this.logger.log(
+            `Enviado para processamento de boleto e envio de email: ${debtId}`,
+          );
+        } else {
           this.logger.warn(
             `Boleto já foi gerado e email já foi enviado - debtId: ${debtId}`,
           );
-
-          return;
         }
-
-        const payload = {
-          debtId,
-          name: line.split(',')[posName],
-          governmentId: line.split(',')[posGovId],
-          email: line.split(',')[posEmail],
-          debtAmount: line.split(',')[posDebtAmount],
-          debtDueDate: line.split(',')[posDebtDueDate],
-        };
-
-        await this.saveBankSlipAndEmail(payload);
-
-        await this.kafkaProducer.sendMessage(this.TOPIC_PRODUCER, payload);
-
-        this.logger.log(
-          `Enviado para processamento de boleto e envio de email: ${debtId}`,
-        );
       }
     } catch (error) {
       this.logger.error(`Erro: ${JSON.stringify(error)}`);
