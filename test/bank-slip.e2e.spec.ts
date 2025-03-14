@@ -3,12 +3,12 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { S3Interface } from '../src/infra/providers/s3/interface/s3.interface';
-import { BankSlipModule } from '../src/modules/bank-slip/bank-slip.module';
 import { DataSourceTestModule } from './data-source-test.module';
 import * as request from 'supertest';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KafkaProducerInterface } from '../src/infra/providers/kafka/interfaces/kafka-producer.interface';
+import { BankSlipModule } from '../src/modules/upload-bank-slip/upload-bank-slip';
 
 describe('Upload Multipart (e2e)', () => {
   let app: INestApplication;

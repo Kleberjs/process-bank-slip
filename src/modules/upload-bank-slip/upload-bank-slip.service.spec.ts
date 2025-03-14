@@ -1,14 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UploadBankSlipsController } from './upload-bank-slip.controller';
-import { UploadBankSlipService } from './upload-bank-slip.service';
-import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
-import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { UploadBankSlipService } from './upload-bank-slip.service';
+import { FileUploaded } from '../database/file-uploaded.orm-entity';
 import { ConfigService } from '@nestjs/config';
+import { KafkaProducerInterface } from '../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { S3Interface } from '../../infra/providers/s3/interface/s3.interface';
 
-describe('UploadBankSlipController', () => {
-  let controller: UploadBankSlipsController;
+describe('UploadBankSlipService', () => {
   let service: UploadBankSlipService;
+  let repository: FileUploadedRepository;
+  let s3Provider: S3Interface;
+  let kafkaProvider: KafkaProducerInterface;
 
   const file = {
     fieldname: 'file',
@@ -23,7 +25,6 @@ describe('UploadBankSlipController', () => {
   beforeAll(async () => {
     const md: TestingModule = await Test.createTestingModule({
       providers: [
-        UploadBankSlipsController,
         UploadBankSlipService,
         {
           provide: ConfigService,
@@ -61,37 +62,47 @@ describe('UploadBankSlipController', () => {
       ],
     }).compile();
 
-    controller = md.get<UploadBankSlipsController>(UploadBankSlipsController);
     service = md.get<UploadBankSlipService>(UploadBankSlipService);
+    repository = md.get<FileUploadedRepository>(FileUploadedRepository);
+    s3Provider = md.get<S3Interface>(S3Interface);
+    kafkaProvider = md.get<KafkaProducerInterface>(KafkaProducerInterface);
   });
+
+  afterEach(jest.clearAllMocks);
 
   it('Should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(service).toBeDefined();
   });
 
-  it('Should throw error service cant process', async () => {
-    const serviceSpy = jest.spyOn(service, 'execute');
+  it('Should throw error when header is wrong', async () => {
     const fileMocked = {
       ...file,
-      buffer: Buffer.from('name,governmentId'),
+      buffer: Buffer.from('name,governmentId,email,debtAmount,debtDueDate'),
     };
 
-    try {
-      await controller.uploadBankSlip(fileMocked);
-      expect(serviceSpy).toHaveBeenCalledWith(fileMocked);
-    } catch (error) {
-      expect(error.statusCode).toEqual(400);
-      expect(error.message).toEqual('Erro no arquivo csv');
-      expect(error.details).toEqual('Deve possuir o tamanho: 6');
-    }
+    await expect(service.execute(fileMocked)).rejects.toThrow();
   });
 
-  it('Should be called successfully', async () => {
-    const serviceSpy = jest.spyOn(service, 'execute');
-    const result = await controller.uploadBankSlip(file);
+  it('Should throw error when file already exist in database', async () => {
+    jest.spyOn(repository, 'findFileHashed').mockResolvedValueOnce({
+      id: 1,
+      filename: 'test-file.csv',
+      fileHashed: '9333f987e62bbd4b522b7246119ab945',
+    } as FileUploaded);
 
-    expect(serviceSpy).toHaveBeenCalledWith(file);
-    expect(result.statusCode).toEqual(201);
-    expect(result.success).toEqual(true);
+    await expect(service.execute(file)).rejects.toThrow();
+  });
+
+  it('Should upload file susscessfully', async () => {
+    const spyUploadFile = jest.spyOn(s3Provider, 'uploadFileInMultipart');
+    const spyKafkaProvider = jest.spyOn(kafkaProvider, 'sendMessage');
+
+    await service.execute(file);
+
+    expect(spyUploadFile).toHaveBeenCalledWith(file.buffer, file.originalname);
+    expect(spyKafkaProvider).toHaveBeenCalledWith('bucketName', {
+      filename: file.originalname,
+      bucketName: 'my-bucket',
+    });
   });
 });

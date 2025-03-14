@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Readable } from 'stream';
-import { ErrorMessageCsvFile } from '../../../infra/handlers/error-message-csv-file.error';
 import { createHash } from 'crypto';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
-import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import * as csvParser from 'csv-parser';
-import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
 import { ConfigService } from '@nestjs/config';
+import { ErrorMessageCsvFile } from '../../infra/handlers/error-message-csv-file.error';
+import { KafkaProducerInterface } from '../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { S3Interface } from '../../infra/providers/s3/interface/s3.interface';
 
 @Injectable()
 export class UploadBankSlipService {

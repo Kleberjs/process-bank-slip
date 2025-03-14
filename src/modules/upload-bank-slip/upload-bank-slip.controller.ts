@@ -9,7 +9,7 @@ import {
 import { UploadBankSlipService } from './upload-bank-slip.service';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FileUploadDto } from '../../../infra/dtos/file-upload.dto';
+import { FileUploadDto } from '../../infra/dtos/file-upload.dto';
 
 @Controller('/bank-slip')
 @ApiTags('BankSlip')
