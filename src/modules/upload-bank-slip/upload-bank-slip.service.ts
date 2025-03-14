@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Readable } from 'stream';
 import { createHash } from 'crypto';
-import { FileUploadedRepository } from '../database/file-uploaded.repository';
+import { FileUploadedRepository } from './database/file-uploaded.repository';
 import * as csvParser from 'csv-parser';
 import { ConfigService } from '@nestjs/config';
 import { ErrorMessageCsvFile } from '../../infra/handlers/error-message-csv-file.error';

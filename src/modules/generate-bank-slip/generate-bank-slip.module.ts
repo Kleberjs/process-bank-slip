@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ProviderModule } from '../../infra/providers/providers.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BankSlip } from '../consumer-file/get-file-s3/database/bank-slip.orm-entity';
-import { BankSlipRepository } from '../consumer-file/get-file-s3/database/bank-slip.repository';
 import { GenerateBankSlipService } from './generate-bank-slip.service';
+import { BankSlip } from '../get-file-s3/database/bank-slip.orm-entity';
+import { BankSlipRepository } from '../get-file-s3/database/bank-slip.repository';
 
 @Module({
   imports: [ProviderModule, TypeOrmModule.forFeature([BankSlip])],

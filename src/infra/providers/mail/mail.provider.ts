@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailInterface } from './interface/mail.interface';
-import { BankSlip } from '../../../modules/consumer-file/get-file-s3/database/bank-slip.orm-entity';
+import { BankSlip } from '../../../modules/get-file-s3/database/bank-slip.orm-entity';
 
 @Injectable()
 export class MailProvider implements MailInterface {

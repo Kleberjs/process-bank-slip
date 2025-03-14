@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UploadBankSlipsController } from './upload-bank-slip.controller';
 import { UploadBankSlipService } from './upload-bank-slip.service';
-import { FileUploadedRepository } from '../database/file-uploaded.repository';
+import { FileUploadedRepository } from './database/file-uploaded.repository';
 import { ConfigService } from '@nestjs/config';
 import { KafkaProducerInterface } from '../../infra/providers/kafka/interfaces/kafka-producer.interface';
 import { S3Interface } from '../../infra/providers/s3/interface/s3.interface';

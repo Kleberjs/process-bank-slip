@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EachMessagePayload } from 'kafkajs';
-import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { Readable } from 'stream';
 import * as readline from 'readline';
+import { BankSlipRepository } from './database/bank-slip.repository';
 import {
   KafkaProducerInterface,
   KafkaSendFileToS3Dto,
-} from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
-import { BankSlipRepository } from './database/bank-slip.repository';
-import { KafkaConsumerGetFileS3Provider } from '../../../infra/providers/kafka/kafka-consumer-get-file-s3.provider';
+} from '../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { KafkaConsumerGetFileS3Provider } from '../../infra/providers/kafka/kafka-consumer-get-file-s3.provider';
+import { S3Interface } from '../../infra/providers/s3/interface/s3.interface';
 
 @Injectable()
 export class GetFileS3Service {
