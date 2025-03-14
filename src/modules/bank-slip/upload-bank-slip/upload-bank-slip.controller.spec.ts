@@ -4,6 +4,7 @@ import { UploadBankSlipService } from './upload-bank-slip.service';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { FileUploadedRepository } from '../database/file-uploaded.repository';
 import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { ConfigService } from '@nestjs/config';
 
 describe('UploadBankSlipController', () => {
   let controller: UploadBankSlipsController;
@@ -24,6 +25,12 @@ describe('UploadBankSlipController', () => {
       providers: [
         UploadBankSlipsController,
         UploadBankSlipService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('bucketName'),
+          },
+        },
         {
           provide: FileUploadedRepository,
           useValue: {

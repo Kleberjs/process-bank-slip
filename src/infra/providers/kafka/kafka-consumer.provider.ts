@@ -40,6 +40,7 @@ export class KafkaConsumerProvider
 
   async consume(topics: string[], config: ConsumerRunConfig) {
     try {
+      this.logger.log(`Trying subscribe to topic: ${JSON.stringify(topics)}`);
       await this.consumer.subscribe({ topics });
 
       await this.consumer.run(config);

@@ -47,7 +47,7 @@ export class UploadBankSlipService {
 
       await this.checkCsvFileAlreadyExistsInDatabase(fileHashed);
 
-      // await this.saveCsvFileInDatabase(queryRunner, file, fileHashed);
+      await this.saveCsvFileInDatabase(queryRunner, file, fileHashed);
 
       this.logger.log(
         `Iniciando upload no bucket para o arquivo: ${file.originalname}`,

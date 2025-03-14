@@ -22,7 +22,7 @@ export class GetFileS3Service {
     private readonly configService: ConfigService,
     private readonly s3Provider: S3Interface,
     private readonly kafkaProducer: KafkaProducerInterface,
-    private kafkaConsumer: KafkaConsumerInterface,
+    private readonly kafkaConsumer: KafkaConsumerInterface,
     private readonly bankSlipRepository: BankSlipRepository,
   ) {
     this.TOPIC_CONSUMER = this.configService.get<string>(
@@ -63,50 +63,59 @@ export class GetFileS3Service {
 
       const readableLine = readline.createInterface({ input: stream });
 
+      let posDebtId: number = 0;
+      let posName: number = 0;
       let posEmail: number = 0;
-      let posDebtyId: number = 0;
+      let posGovId: number = 0;
+      let posDebtAmount: number = 0;
+      let posDebtDueDate: number = 0;
+
       let isFirstLine = true;
 
       for await (const line of readableLine) {
         if (isFirstLine) {
-          posDebtyId = line.split(',').findIndex((l) => l === 'debtId');
+          const headerPosition = this.getPositionHeader(line);
 
-          posEmail = line.split(',').findIndex((l) => l === 'email');
+          posDebtId = headerPosition.posDebtId;
+          posName = headerPosition.posName;
+          posGovId = headerPosition.posGovId;
+          posEmail = headerPosition.posEmail;
+          posDebtAmount = headerPosition.posDebtAmount;
+          posDebtDueDate = headerPosition.posDebtDueDate;
 
           isFirstLine = false;
+
           continue;
         }
 
-        const debtyId = line.split(',')[posDebtyId];
-
-        const email = line.split(',')[posEmail];
-
-        if (!debtyId || !email) {
-          throw Error(`Cabeçalho não encontrado no arquivo: ${filename}`);
-        }
+        const debtId = line.split(',')[posDebtId];
 
         const fileAlreadyProcessed =
-          await this.bankSlipAlreadyProcessed(debtyId);
+          await this.bankSlipAlreadyProcessed(debtId);
 
         if (fileAlreadyProcessed) {
           this.logger.warn(
-            `Boleto já foi gerado e email já foi enviado - debtyId: ${debtyId}`,
+            `Boleto já foi gerado e email já foi enviado - debtId: ${debtId}`,
           );
 
           return;
         }
 
         const payload = {
-          debtyId,
-          email,
+          debtId,
+          name: line.split(',')[posName],
+          governmentId: line.split(',')[posGovId],
+          email: line.split(',')[posEmail],
+          debtAmount: line.split(',')[posDebtAmount],
+          debtDueDate: line.split(',')[posDebtDueDate],
         };
 
-        await this.saveBankSlip(payload);
+        await this.saveBankSlipAndEmail(payload);
 
         await this.kafkaProducer.sendMessage(this.TOPIC_PRODUCER, payload);
 
         this.logger.log(
-          `Enviado para processamento de boleto e envio de email: ${debtyId}`,
+          `Enviado para processamento de boleto e envio de email: ${debtId}`,
         );
       }
     } catch (error) {
@@ -130,17 +139,41 @@ export class GetFileS3Service {
     return value;
   }
 
-  private async bankSlipAlreadyProcessed(debtyId: string): Promise<boolean> {
+  private getPositionHeader(line: string): {
+    posDebtId: number;
+    posName: number;
+    posGovId: number;
+    posEmail: number;
+    posDebtAmount: number;
+    posDebtDueDate: number;
+  } {
+    const posDebtId = line.split(',').findIndex((l) => l === 'debtId');
+    const posName = line.split(',').findIndex((l) => l === 'name');
+    const posGovId = line.split(',').findIndex((l) => l === 'governmentId');
+    const posEmail = line.split(',').findIndex((l) => l === 'email');
+    const posDebtAmount = line.split(',').findIndex((l) => l === 'debtAmount');
+    const posDebtDueDate = line
+      .split(',')
+      .findIndex((l) => l === 'debtDueDate');
+
+    return {
+      posDebtId,
+      posName,
+      posGovId,
+      posEmail,
+      posDebtAmount,
+      posDebtDueDate,
+    };
+  }
+
+  private async bankSlipAlreadyProcessed(debtId: string): Promise<boolean> {
     const isAlreadProcced =
-      await this.bankSlipRepository.getBankSlipProcessed(debtyId);
+      await this.bankSlipRepository.getBankSlipProcessed(debtId);
 
     return !!isAlreadProcced;
   }
 
-  private async saveBankSlip(payload: {
-    debtyId: string;
-    email: string;
-  }): Promise<void> {
+  private async saveBankSlipAndEmail(payload): Promise<void> {
     await this.bankSlipRepository.saveBankSlip(payload);
   }
 }

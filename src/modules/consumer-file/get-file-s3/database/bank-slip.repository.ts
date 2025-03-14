@@ -11,15 +11,15 @@ export class BankSlipRepository {
     private readonly repository: Repository<BankSlip>,
   ) {}
 
-  async getBankSlip(debtyId: string): Promise<BankSlip | null> {
-    return this.repository.findOne({ where: { debtyId: debtyId } });
+  async getBankSlip(debtId: string): Promise<BankSlip | null> {
+    return this.repository.findOne({ where: { debtId: debtId } });
   }
 
-  async getBankSlipProcessed(debtyId: string): Promise<number> {
+  async getBankSlipProcessed(debtId: string): Promise<number> {
     try {
       return this.repository.count({
         where: {
-          debtyId,
+          debtId,
           emailSended: true,
           bankSlipGenerated: true,
         },
@@ -31,17 +31,33 @@ export class BankSlipRepository {
     }
   }
 
-  async saveBankSlip(payload: {
-    debtyId: string;
-    email: string;
-  }): Promise<void> {
+  async saveBankSlip(payload: any): Promise<void> {
     try {
       const dto = {
-        debtyId: payload.debtyId,
+        debtId: payload.debtId,
+        name: payload.name,
+        governmentId: payload.governmentId,
         email: payload.email,
+        debtAmount: payload.debtAmount,
+        debtDueDate: payload.debtDueDate,
       };
 
       await this.repository.save(dto);
+    } catch (error) {
+      this.logger.error(`Error database: ${JSON.stringify(error)}`);
+
+      throw error;
+    }
+  }
+
+  async updateBankSlip(dto: BankSlip): Promise<void> {
+    try {
+      await this.repository.update(
+        {
+          debtId: dto.debtId,
+        },
+        dto,
+      );
     } catch (error) {
       this.logger.error(`Error database: ${JSON.stringify(error)}`);
 

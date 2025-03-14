@@ -4,6 +4,7 @@ import { UploadBankSlipService } from './upload-bank-slip.service';
 import { FileUploaded } from '../database/file-uploaded.orm-entity';
 import { S3Interface } from '../../../infra/providers/s3/interface/s3.interface';
 import { KafkaProducerInterface } from '../../../infra/providers/kafka/interfaces/kafka-producer.interface';
+import { ConfigService } from '@nestjs/config';
 
 describe('UploadBankSlipService', () => {
   let service: UploadBankSlipService;
@@ -25,6 +26,12 @@ describe('UploadBankSlipService', () => {
     const md: TestingModule = await Test.createTestingModule({
       providers: [
         UploadBankSlipService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('bucketName'),
+          },
+        },
         {
           provide: FileUploadedRepository,
           useValue: {
@@ -93,7 +100,7 @@ describe('UploadBankSlipService', () => {
     await service.execute(file);
 
     expect(spyUploadFile).toHaveBeenCalledWith(file.buffer, file.originalname);
-    expect(spyKafkaProvider).toHaveBeenCalledWith({
+    expect(spyKafkaProvider).toHaveBeenCalledWith('bucketName', {
       filename: file.originalname,
       bucketName: 'my-bucket',
     });
