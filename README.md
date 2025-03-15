@@ -22,14 +22,16 @@ O módulo **upload-bank-slip** é responsável pelo processamento inicial do arq
 O módulo **get-file-s3** é responsável pela busca do arquivo salvo no bucket s3. Ele realiza as seguintes ações:
 
 - **Busca arquivo salvo no bucket s3** - Recebe o nome do arquivo quando é emitido um novo evento na fila e busca no bucket s3.
-- **Itera no arquivo** - O arquivo é transformado em um Readable Stream e é iterado utilizando async iterator do javascript
+- **Itera no arquivo** - O arquivo é transformado em um Readable Stream e é iterado utilizando async iterator
 - **Emite evento no Kafka** - Cada linha iterada é enviado para um novo tópico no kafka
 
 ### 3. **generate-bank-slip**
 O módulo **generate-bank-slip** é responsável por ouvir novas informações no tópico para geração de boleto e envio de e-mail.
 
 - **Validação de boletos gerados** - Checa se o boleto recebido pelo kafka já foi processado.
-- **Validação de envio de email** - Checa se já foi enviado para o usuário após a geração do boleto.
+- **Validação de envio de email** - Checa se já foi enviado o e-mail para o usuário após a geração do boleto.
+- **Gera boleto** - Possui uma interface que simula a geração de boleto
+- **Envia email** - Possui uma interface que simula o envio de email
 
 
 ### 📂 Estrutura do Projeto
