@@ -29,7 +29,7 @@ O módulo **get-file-s3** é responsável pela busca do arquivo salvo no bucket 
 O módulo **generate-bank-slip** é responsável por ouvir novas informações no tópico para geração de boleto e envio de e-mail.
 
 - **Validação de boletos gerados** - Checa se o boleto recebido pelo kafka já foi processado.
-- **Validação de envio de email** - Checa se já foi enviado para o usuário após a geração do boleto.
+- **Validação de envio de email** - Checa se já foi enviado o e-mail para o usuário após a geração do boleto.
 
 
 ### 📂 Estrutura do Projeto
