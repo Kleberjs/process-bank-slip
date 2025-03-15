@@ -10,7 +10,7 @@ export const dbConfig = {
   password: process.env.DB_PWD,
   database: process.env.DB_NAME,
   port: 5432,
-  migrations: ['dist/src/infra/database/migrations/*.js'],
+  migrations: ['src/infra/database/migrations/*.ts'],
   logging: true,
 } as DataSourceOptions;
 
