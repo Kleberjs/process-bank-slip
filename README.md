@@ -8,7 +8,7 @@ Este projeto é responsável por receber arquivos CSV, processá-los e enviar ev
 
 Cada módulo foi projetado de forma independente, podendo ser transformado em micro-serviços separados.
 
-## Funcionamento de cada módulo
+## ⚙️ Funcionamento dos Módulos
 
 ### 1. **upload-bank-slip**
 O módulo **upload-bank-slip** é responsável pelo processamento inicial do arquivo CSV. Ele realiza as seguintes ações:
@@ -34,7 +34,7 @@ O módulo **generate-bank-slip** é responsável por ouvir novas informações n
 
 ### 📂 Estrutura do Projeto
 
-```
+```⚔
 - src/
   - modules/ ➝ Contém os módulos da aplicação
     - upload-bank-slip/ ➝ Salva arquivos no bucket S3 e emite evento no Kafka
