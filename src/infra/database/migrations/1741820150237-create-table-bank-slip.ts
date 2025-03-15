@@ -25,6 +25,7 @@ export class CreateTableBankSlip1741820150237 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX "IDX_debt_id"`);
-    await queryRunner.query(`DROP TABLE BankSlip`);
+
+    await queryRunner.query(`DROP TABLE "BankSlip"`);
   }
 }
